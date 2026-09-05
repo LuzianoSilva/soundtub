@@ -1,0 +1,8 @@
+SoundTub
+Copyright (C) 2026 Luziano Silva
+
+Este complemento é distribuído sob a GNU General Public License, versão 3 ou
+qualquer versão posterior (GPL-3.0-or-later).
+
+Texto completo: globalPlugins/soundtub/dependencies/win64/FFMPEG-LICENSE.txt
+Avisos de terceiros: globalPlugins/soundtub/dependencies/THIRD-PARTY-NOTICES.txt

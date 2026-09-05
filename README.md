@@ -1,0 +1,31 @@
+# SoundTub
+
+Add-on acessível para baixar áudio MP3 e vídeo MP4 pelo NVDA com `NVDA+Alt+C`.
+
+## Arquitetura
+
+- `gui.py`: janela wxPython, feedback acessível e coordenação da thread.
+- `downloader.py`: processo isolado, progresso, cancelamento e tradução de erros.
+- `config.py`: persistência da pasta e base para configurações futuras.
+- `utils.py`: validação de URL, caminhos e mensagens amigáveis.
+- `dependencies/win64`: ferramentas internas; nada é instalado no Windows do usuário.
+
+## Desenvolvimento
+
+Execute os testes com `python -m unittest discover -s tests`. O pacote final é criado por
+`tools/build_addon.ps1`, depois que as dependências verificadas forem preparadas.
+
+O download deve ser usado apenas para conteúdo que o usuário tenha direito de baixar.
+
+## Dependências e licenças
+
+O pacote usa versões fixas de yt-dlp, FFmpeg e QuickJS-NG e inclui hashes, licenças e os
+fontes correspondentes exigidos pelas ferramentas GPL. Consulte
+`addon/globalPlugins/soundtub/dependencies/THIRD-PARTY-NOTICES.txt`. O FFmpeg GPL
+foi escolhido porque a conversão MP3 requer libmp3lame. A compilação compartilhada
+evita duplicar as bibliotecas usadas por FFmpeg e FFprobe, preservando a instalação
+em um único arquivo.
+
+O SoundTub também inclui um provedor local de PO Token em Rust. Ele permite que o
+yt-dlp responda às verificações anônimas do YouTube sem ler cookies, abrir navegador
+ou acessar uma conta do usuário.

@@ -1,0 +1,134 @@
+EXPLICAÇÃO TÉCNICA
+
+Eu desenvolvi o SoundTub como um complemento para o leitor de telas NVDA. Meu objetivo foi criar uma ferramenta simples e acessível que permita baixar músicas em MP3 e vídeos em MP4 diretamente pelo NVDA, sem exigir que o usuário instale Python, yt-dlp, FFmpeg ou qualquer outro programa separadamente.
+
+LINGUAGEM E TECNOLOGIAS UTILIZADAS
+
+Eu usei Python para desenvolver a lógica principal do complemento. O NVDA já possui um interpretador Python interno, portanto o código do SoundTub é executado dentro da própria arquitetura de complementos do leitor de telas.
+
+Para criar a janela do programa, eu usei wxPython, que é a biblioteca gráfica adotada pelo próprio NVDA. Dessa forma, pude utilizar controles nativos e acessíveis, como caixas de edição, listas de seleção, botões, textos de estado e barra de progresso.
+
+Também usei componentes da API do NVDA, entre eles:
+
+- globalPluginHandler, para registrar o SoundTub como um plugin global;
+- scriptHandler, para criar o comando de teclado NVDA+Alt+C;
+- ui.message, para anunciar mensagens pelo leitor de telas;
+- addonHandler, para inicializar o sistema de tradução;
+- config, para salvar a última pasta escolhida pelo usuário;
+- gui.mainFrame, para abrir e fechar corretamente a janela dentro do NVDA.
+
+ORGANIZAÇÃO DO PROJETO
+
+Eu organizei o código em vários módulos para não concentrar todo o desenvolvimento em um único arquivo.
+
+O arquivo __init__.py registra o plugin global e o atalho NVDA+Alt+T.
+
+O arquivo gui.py contém a janela acessível do SoundTub e seus controles.
+
+O arquivo downloader.py controla o download, a conversão, o progresso e o cancelamento.
+
+O arquivo config.py cuida das configurações persistentes, como a pasta de destino.
+
+O arquivo utils.py contém validação de URL, interpretação do progresso e tradução de erros técnicos para mensagens mais compreensíveis.
+
+A pasta dependencies contém todas as ferramentas internas necessárias para o funcionamento do complemento.
+
+DOWNLOAD DE ÁUDIO E VÍDEO
+
+Eu usei o yt-dlp como mecanismo principal de extração e download. Em vez de exigir uma instalação externa, incluí uma versão executável do yt-dlp dentro do complemento.
+
+Para MP3, configurei o yt-dlp para obter o melhor áudio disponível. Depois, o FFmpeg converte o arquivo para MP3 com qualidade de 192 quilobits por segundo. Sempre que as informações estiverem disponíveis, também são adicionados metadados, como título e artista.
+
+Para MP4, configurei a seleção de vídeo e áudio dando preferência a H.264 e AAC, com resolução de até 1080p. Quando vídeo e áudio são fornecidos separadamente, o FFmpeg faz a união em um único arquivo MP4 reproduzível.
+
+FFMPEG E FFPROBE
+
+Eu incluí FFmpeg e FFprobe dentro do SoundTub. O FFmpeg é usado para converter áudio, mesclar vídeo e áudio e gravar metadados. O FFprobe acompanha a distribuição porque também é usado internamente pelo yt-dlp para examinar os arquivos de mídia.
+
+Para reduzir o tamanho final do complemento, usei uma compilação compartilhada do FFmpeg. Assim, FFmpeg e FFprobe utilizam as mesmas DLLs, em vez de cada executável carregar uma cópia completa das bibliotecas.
+
+SUPORTE AO JAVASCRIPT
+
+O YouTube utiliza desafios em JavaScript durante a extração dos vídeos. Para resolvê-los, incluí o QuickJS-NG, que é um runtime JavaScript pequeno e suportado pelo yt-dlp.
+
+Inicialmente eu havia utilizado o Deno, mas ele ocupava muito espaço. A troca para QuickJS-NG permitiu reduzir significativamente o tamanho do complemento sem remover as funções de download.
+
+PO TOKEN E ACESSO ANÔNIMO
+
+O YouTube passou a exigir uma verificação chamada Proof of Origin Token, ou PO Token, para vários formatos de mídia. Sem esse token, o servidor pode responder com o erro HTTP 403 ou pedir autenticação.
+
+Para manter o SoundTub simples e não depender de cookies, contas ou navegadores, eu integrei o bgutil-ytdlp-pot-provider-rs. Esse componente foi desenvolvido em Rust e gera localmente o PO Token solicitado pelo YouTube.
+
+O provedor é carregado pelo sistema de plugins do yt-dlp. Quando necessário, ele executa o desafio de verificação, gera o token e o entrega ao yt-dlp. Todo esse processo ocorre automaticamente, sem que o usuário precise fazer login ou configurar qualquer ferramenta.
+
+Quando o cliente mweb é utilizado, eu mantenho a extração vinculada somente a ele. Isso garante que o formato de mídia selecionado utilize o mesmo PO Token que foi gerado para esse cliente, evitando erros 403 causados pela mistura de formatos diferentes.
+
+Para melhorar a compatibilidade, eu implementei duas tentativas anônimas internas. Primeiro o SoundTub usa o cliente web_embedded, que consegue baixar muitos vídeos sem autenticação e sem PO Token. Se o proprietário não permitir reprodução incorporada ou se esse cliente falhar, o complemento tenta automaticamente o cliente mweb com o provedor local de PO Token.
+
+PROCESSAMENTO EM SEGUNDO PLANO
+
+Eu fiz o download em uma thread separada para que a interface do NVDA nunca fique bloqueada durante o download ou a conversão.
+
+O yt-dlp é iniciado por subprocesso com uma lista segura de argumentos. Eu não usei shell=True e não construí comandos de shell a partir da URL informada pelo usuário.
+
+A URL é validada antes do início do download. Somente endereços HTTP e HTTPS são aceitos. URLs que contenham usuário e senha incorporados também são rejeitadas.
+
+O processo é iniciado sem janela de terminal. Quando o usuário cancela, o SoundTub encerra o yt-dlp e toda a árvore de subprocessos, incluindo eventuais processos do FFmpeg.
+
+ACESSIBILIDADE
+
+Eu desenvolvi a interface pensando na navegação completa pelo teclado e no uso com leitor de telas.
+
+A janela contém:
+
+- uma caixa para a URL;
+- uma lista para escolher MP3 ou MP4;
+- a pasta de destino atual;
+- um botão para escolher a pasta;
+- um botão para iniciar o download;
+- um botão para cancelar;
+- uma mensagem de estado;
+- uma barra de progresso;
+- um botão para fechar.
+
+O NVDA anuncia o início, os principais pontos do progresso e a conclusão. Para evitar fala excessiva, o SoundTub não anuncia cada alteração percentual. Os anúncios são feitos em 10, 25, 50, 75 e 100 por cento.
+
+Também transformei erros técnicos em mensagens mais simples em português. Os detalhes completos continuam registrados no log do NVDA para diagnóstico.
+
+CONFIGURAÇÕES
+
+Eu usei o sistema de configuração do NVDA para guardar a última pasta escolhida. Assim, a pasta continua selecionada depois que o NVDA é reiniciado.
+
+Quando nenhuma pasta foi definida, o SoundTub tenta usar a pasta Downloads do Windows. A estrutura do módulo de configuração permite adicionar futuramente qualidade de áudio, formato padrão, notificações e atualização das ferramentas internas.
+
+SEGURANÇA
+
+Eu não executo a URL como parte de um comando de shell. Todos os parâmetros são enviados diretamente ao executável por uma lista de argumentos.
+
+As ferramentas internas ficam dentro da pasta do complemento. Nenhum executável é gravado em uma pasta temporária insegura e nenhuma dependência é instalada globalmente no Windows.
+
+O SoundTub não lê cookies do navegador, não acessa contas e não armazena credenciais.
+
+LICENÇAS
+
+Eu incluí no projeto os avisos, textos de licença, hashes SHA-256 e códigos-fonte correspondentes exigidos pelas dependências distribuídas.
+
+O yt-dlp possui componentes com diferentes licenças. A compilação do FFmpeg utilizada é distribuída sob a GPL versão 3. O provedor de PO Token também utiliza GPL versão 3. O QuickJS-NG utiliza a licença MIT.
+
+Os detalhes estão na pasta dependencies, nos arquivos THIRD-PARTY-NOTICES.txt e checksums.sha256 e na subpasta legal.
+
+TESTES E EMPACOTAMENTO
+
+Eu criei testes automatizados para validar URLs, interpretar o progresso, conferir a pasta de destino e transformar erros técnicos em mensagens amigáveis.
+
+Também validei manualmente os fluxos MP3 e MP4. Nos testes, o SoundTub conseguiu gerar o PO Token, baixar áudio, converter para MP3, baixar vídeo e áudio, mesclar em MP4 e adicionar metadados.
+
+O arquivo final é criado no formato .nvda-addon. Ele é um pacote ZIP com a estrutura esperada pelo NVDA, caminhos portáveis e sem arquivos temporários ou caches do Python.
+
+RESULTADO
+
+O resultado do desenvolvimento é um complemento autocontido. O usuário instala somente o arquivo SoundTub.nvda-addon, reinicia o NVDA e abre a interface com NVDA+Alt+C.
+
+Depois disso, basta colar uma URL, escolher MP3 ou MP4, selecionar a pasta e iniciar o download.
+
+Os arquivos são salvos utilizando somente o título fornecido pelo serviço e a extensão final, sem acrescentar o identificador interno do vídeo ao nome.

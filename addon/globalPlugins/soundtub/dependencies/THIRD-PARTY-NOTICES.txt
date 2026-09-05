@@ -1,0 +1,36 @@
+SoundTub 3.3.3 - avisos de componentes de terceiros
+===================================================
+
+Este pacote executa ferramentas separadas, sem modificar seus binários.
+
+yt-dlp nightly 2026.08.16.020253
+-----------------
+Projeto: https://github.com/yt-dlp/yt-dlp
+O código principal usa The Unlicense. O executável PyInstaller contém componentes
+GPLv3+ e outros componentes cujas licenças constam em legal/.
+Código-fonte correspondente: legal/yt-dlp-2026.08.16.020253-source.tar.gz.
+
+FFmpeg N-126175-g0056dd32fd-20260816
+-----------------------------------
+Projeto: https://ffmpeg.org/
+Esta compilação foi criada com --enable-gpl e --enable-version3 e é distribuída
+sob GPLv3. O texto da GPL está em win64/FFMPEG-LICENSE.txt.
+Código-fonte correspondente: legal/ffmpeg-0056dd32fd-source.tar.gz.
+Configuração completa da compilação pode ser consultada com `ffmpeg.exe -version`.
+
+QuickJS-NG 0.16.1
+-----------------
+Projeto: https://github.com/quickjs-ng/quickjs
+Licença MIT em legal/QUICKJS-LICENSE.
+O executável informa a versão 0.16.1. A licença MIT não exige a distribuição do
+código-fonte; o projeto completo está disponível no endereço acima.
+
+Os hashes SHA-256 dos artefatos são registrados em checksums.sha256.
+
+BgUtils POT Provider for yt-dlp (Rust) 0.8.1
+------------------------------------------------
+Projeto: https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs
+Licença GPLv3 em legal/BGUTIL-POT-PROVIDER-LICENSE.txt.
+Código-fonte correspondente:
+legal/bgutil-ytdlp-pot-provider-rs-0.8.1-source.tar.gz.
+O componente gera localmente tokens de verificação anônima solicitados pelo YouTube.
