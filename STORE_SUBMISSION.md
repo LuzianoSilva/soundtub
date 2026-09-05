@@ -14,10 +14,8 @@ apenas a versão do NVDA efetivamente usada nos testes locais.
 - Canal inicial: stable
 - Licença: GNU GPL v3 ou posterior (`GPL-3.0-or-later`)
 - URL da licença: `https://www.gnu.org/licenses/gpl-3.0.html`
-- Repositório de código: `https://github.com/SEU_USUARIO/soundtub`
-- Download imutável: `https://github.com/SEU_USUARIO/soundtub/releases/download/v3.3.3/SoundTub-3.3.3.nvda-addon`
-
-Substitua `SEU_USUARIO` pelo nome real da conta antes do cadastro.
+- Repositório de código: `https://github.com/LuzianoSilva/soundtub`
+- Download imutável: `https://github.com/LuzianoSilva/soundtub/releases/download/v3.3.3/SoundTub-3.3.3.nvda-addon`
 
 ## Checklist antes de publicar
 
