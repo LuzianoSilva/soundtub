@@ -1,6 +1,15 @@
 # SoundTub
 
-Add-on acessível para baixar áudio MP3 e vídeo MP4 pelo NVDA com `NVDA+Alt+C`.
+Add-on acessível para baixar áudio MP3 e vídeo MP4 pelo NVDA com `NVDA+Alt+Y`.
+
+## Diferencial
+
+O SoundTub foi projetado para uma experiência centrada no NVDA, sem depender da
+acessibilidade de páginas ou aplicativos externos. A interface é totalmente operável
+por teclado e o leitor de telas anuncia a análise do endereço, o início e o progresso
+do download, a posição na playlist, conclusões parciais e erros. Em playlists, os
+arquivos já concluídos são preservados e somente os itens ausentes são tentados
+novamente. O funcionamento é anônimo e não lê cookies nem contas do navegador.
 
 ## Arquitetura
 

@@ -1,4 +1,4 @@
-param([string]$Output = "dist\SoundTub-1.0.0.nvda-addon")
+param([string]$Output = "dist\SoundTub-4.0.0.nvda-addon")
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $addon = Join-Path $root "addon"

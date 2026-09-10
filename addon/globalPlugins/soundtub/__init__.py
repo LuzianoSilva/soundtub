@@ -15,7 +15,7 @@ class GlobalPlugin(globalPluginHandler.GlobalPlugin):
     @script(
         description=_("Abrir o SoundTub"),
         category=_("SoundTub"),
-        gesture="kb:NVDA+alt+c",
+        gesture="kb:NVDA+alt+y",
     )
     def script_openSoundTub(self, gesture):
         wx.CallAfter(self._showDialog)

@@ -11,7 +11,7 @@ Para criar a janela do programa, eu usei wxPython, que é a biblioteca gráfica 
 Também usei componentes da API do NVDA, entre eles:
 
 - globalPluginHandler, para registrar o SoundTub como um plugin global;
-- scriptHandler, para criar o comando de teclado NVDA+Alt+C;
+- scriptHandler, para criar o comando de teclado NVDA+Alt+Y;
 - ui.message, para anunciar mensagens pelo leitor de telas;
 - addonHandler, para inicializar o sistema de tradução;
 - config, para salvar a última pasta escolhida pelo usuário;
@@ -127,7 +127,7 @@ O arquivo final é criado no formato .nvda-addon. Ele é um pacote ZIP com a est
 
 RESULTADO
 
-O resultado do desenvolvimento é um complemento autocontido. O usuário instala somente o arquivo SoundTub.nvda-addon, reinicia o NVDA e abre a interface com NVDA+Alt+C.
+O resultado do desenvolvimento é um complemento autocontido. O usuário instala somente o arquivo SoundTub.nvda-addon, reinicia o NVDA e abre a interface com NVDA+Alt+Y.
 
 Depois disso, basta colar uma URL, escolher MP3 ou MP4, selecionar a pasta e iniciar o download.
 

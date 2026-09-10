@@ -1,6 +1,14 @@
 # Histórico de mudanças
 
-## 1.0.0 — lançamento público inicial
+## 4.0.0
+
+- Adota numeração superior à versão 3.3.3 que chegou a ser publicada durante a
+  preparação para a Loja de Complementos do NVDA.
+- Altera o atalho padrão de NVDA+Alt+C para NVDA+Alt+Y para evitar conflito com o
+  comando de comentários e notas usado em alguns aplicativos.
+- Explica com mais clareza o fluxo de trabalho acessível e integrado ao NVDA.
+
+## 3.3.3 — versão anterior ao envio à loja
 
 - Oferece uma interface acessível para baixar áudio MP3 e vídeo MP4.
 - Permite baixar vídeos individuais e playlists completas em pastas organizadas.

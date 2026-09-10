@@ -1,4 +1,4 @@
-SoundTub 1.0.0 - avisos de componentes de terceiros
+SoundTub 4.0.0 - avisos de componentes de terceiros
 ===================================================
 
 Este pacote executa ferramentas separadas, sem modificar seus binários.
