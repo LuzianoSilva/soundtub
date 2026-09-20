@@ -14,16 +14,23 @@ from .utils import (
 
 log = logging.getLogger("nvda.soundtub")
 
+AUDIO_QUALITIES = (128, 192, 256, 320)
+VIDEO_QUALITIES = (360, 480, 720, 1080)
+
 
 class DownloadCancelled(Exception):
     pass
 
 
 class DownloadWorker:
-    def __init__(self, tools_dir, url, media_format, destination, playlist, on_progress, on_done, on_status=None, on_item=None):
+    def __init__(self, tools_dir, url, media_format, destination, playlist, on_progress, on_done, on_status=None, on_item=None, quality=None):
         self.tools_dir = Path(tools_dir)
         self.url = url
         self.media_format = media_format
+        allowed = AUDIO_QUALITIES if media_format == "MP3" else VIDEO_QUALITIES if media_format == "MP4" else ()
+        self.quality = int(quality if quality is not None else (192 if media_format == "MP3" else 1080))
+        if self.quality not in allowed:
+            raise ValueError("Qualidade ou formato inválido")
         self.destination = destination
         self.playlist = playlist
         self.on_progress = on_progress
@@ -94,11 +101,12 @@ class DownloadWorker:
         if self.media_format == "MP3":
             command.extend([
                 "-f", "bestaudio/best", "-x", "--audio-format", "mp3",
-                "--audio-quality", "192K", "--embed-metadata",
+                "--audio-quality", "%dK" % self.quality, "--embed-metadata",
             ])
         else:
             command.extend([
-                "-f", "bv*+ba/b", "-S", "res:1080,vcodec:h264,acodec:aac",
+                "-f", "bv*[height<=%d]+ba/b[height<=%d]" % (self.quality, self.quality),
+                "-S", "res:%d,vcodec:h264,acodec:aac" % self.quality,
                 "--merge-output-format", "mp4", "--recode-video", "mp4",
                 "--embed-metadata",
             ])
@@ -121,8 +129,7 @@ class DownloadWorker:
             creationflags = 0
             if os.name == "nt":
                 creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            self.on_status(_("Analisando o endereço."))
-            download_announced = False
+            self.on_status(_("Iniciando download."))
             retry_items = None
             for player_client in ("web_embedded", "mweb"):
                 attempt_output = []
@@ -153,9 +160,6 @@ class DownloadWorker:
                             playlist_total = item_total
                     progress = parse_progress(clean)
                     if progress is not None:
-                        if not download_announced:
-                            download_announced = True
-                            self.on_status(_("Iniciando download."))
                         self.on_progress(progress)
                     if self._cancelled.is_set():
                         break

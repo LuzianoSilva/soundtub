@@ -1,11 +1,15 @@
 from pathlib import Path
+import logging
 
+import nvwave
 import ui
 import wx
 
 from . import config as soundtub_config
-from .downloader import DownloadWorker
+from .downloader import AUDIO_QUALITIES, VIDEO_QUALITIES, DownloadWorker
 from .utils import ensure_destination, validate_url
+
+log = logging.getLogger("nvda.soundtub")
 
 
 class SoundTubDialog(wx.Dialog):
@@ -16,6 +20,7 @@ class SoundTubDialog(wx.Dialog):
         self._on_closed = on_closed
         self._worker = None
         self._announced = set()
+        self._start_sound_played = False
         self._buildUi()
         self.Bind(wx.EVT_CLOSE, self._onClose)
         self.SetMinSize((540, 340))
@@ -31,9 +36,18 @@ class SoundTubDialog(wx.Dialog):
         self.url = wx.TextCtrl(panel, name=_("URL do vídeo ou música"))
         root.Add(self.url, 0, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 8)
 
-        root.Add(wx.StaticText(panel, label=_("&Formato:")), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
-        self.format = wx.Choice(panel, choices=[_("MP3 — somente áudio"), _("MP4 — vídeo")], name=_("Formato"))
-        self.format.SetSelection(1 if soundtub_config.get_default_format() == "MP4" else 0)
+        root.Add(wx.StaticText(panel, label=_("&Formato e qualidade:")), 0, wx.LEFT | wx.RIGHT | wx.TOP, 8)
+        self.format_options = (
+            [("MP3", quality) for quality in AUDIO_QUALITIES]
+            + [("MP4", quality) for quality in VIDEO_QUALITIES]
+        )
+        labels = (
+            [_("Selecione o formato e a qualidade que deseja baixar")]
+            + [_("MP3 (%d kbps)") % quality for quality in AUDIO_QUALITIES]
+            + [_("MP4 (%dp)") % quality for quality in VIDEO_QUALITIES]
+        )
+        self.format = wx.Choice(panel, choices=labels, name=_("Formato e qualidade"))
+        self.format.SetSelection(0)
         root.Add(self.format, 0, wx.EXPAND | wx.ALL, 8)
 
         self.playlist = wx.CheckBox(panel, label=_("Baixar &playlist completa"))
@@ -85,17 +99,20 @@ class SoundTubDialog(wx.Dialog):
             self._showError(_("Digite um endereço HTTP ou HTTPS válido."))
             self.url.SetFocus()
             return
+        if self.format.Selection <= 0:
+            self._showError(_("Selecione o formato e a qualidade que deseja baixar."))
+            self.format.SetFocus()
+            return
         try:
             destination = ensure_destination(self.folder.Value)
         except ValueError as error:
             self._showError(str(error))
             return
-        media_format = "MP3" if self.format.Selection == 0 else "MP4"
+        media_format, quality = self.format_options[self.format.Selection - 1]
         tools_dir = Path(__file__).resolve().parent / "dependencies" / "win64"
         self._announced.clear()
+        self._start_sound_played = False
         self.progress.Value = 0
-        self.status.Label = _("Preparando download.")
-        ui.message(_("Preparando download."))
         self._setDownloading(True)
         self._worker = DownloadWorker(
             tools_dir, url, media_format, destination, self.playlist.Value,
@@ -103,12 +120,22 @@ class SoundTubDialog(wx.Dialog):
             lambda success, message: wx.CallAfter(self._onDone, success, message),
             lambda message: wx.CallAfter(self._onStatus, message),
             lambda index, total: wx.CallAfter(self._onPlaylistItem, index, total),
+            quality=quality,
         )
         self._worker.start()
 
     def _onStatus(self, message):
         self.status.Label = message
         ui.message(message)
+        if message == _("Iniciando download.") and not self._start_sound_played:
+            self._start_sound_played = True
+            self._playSound("jogada_certa.wav")
+
+    def _playSound(self, file_name):
+        try:
+            nvwave.playWaveFile(str(Path(__file__).resolve().parent / "sounds" / file_name))
+        except Exception:
+            log.exception("Não foi possível reproduzir o som %s", file_name)
 
     def _onPlaylistItem(self, index, total):
         self._announced.clear()
@@ -135,6 +162,7 @@ class SoundTubDialog(wx.Dialog):
         self.status.Label = message
         ui.message(message)
         if success:
+            self._playSound("zona_cruzamento.wav")
             self.progress.Value = 100
             wx.MessageBox(message, "SoundTub", wx.OK | wx.ICON_INFORMATION, self)
         elif message != _("Download cancelado."):

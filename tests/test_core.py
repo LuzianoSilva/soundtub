@@ -3,7 +3,9 @@ import builtins
 import sys
 import tempfile
 import unittest
+import wave
 from pathlib import Path
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "addon" / "globalPlugins" / "soundtub"
@@ -65,6 +67,59 @@ class CoreTests(unittest.TestCase):
         command = worker.build_command("mweb", [4, 9])
         position = command.index("--playlist-items")
         self.assertEqual(command[position + 1], "4,9")
+
+    def test_audio_quality_presets(self):
+        for quality in downloader.AUDIO_QUALITIES:
+            worker = downloader.DownloadWorker(
+                ROOT, "https://example.com/video", "MP3", ROOT, False,
+                lambda value: None, lambda success, message: None, quality=quality,
+            )
+            command = worker.build_command()
+            self.assertEqual(command[command.index("--audio-quality") + 1], "%dK" % quality)
+
+    def test_video_quality_caps_resolution(self):
+        for quality in downloader.VIDEO_QUALITIES:
+            worker = downloader.DownloadWorker(
+                ROOT, "https://example.com/video", "MP4", ROOT, False,
+                lambda value: None, lambda success, message: None, quality=quality,
+            )
+            command = worker.build_command()
+            self.assertEqual(command[command.index("-f") + 1],
+                             "bv*[height<=%d]+ba/b[height<=%d]" % (quality, quality))
+            self.assertIn("res:%d,vcodec:h264,acodec:aac" % quality, command)
+
+    def test_start_is_announced_once_before_progress(self):
+        events = []
+        worker = downloader.DownloadWorker(
+            ROOT, "https://example.com/video", "MP3", ROOT, False,
+            lambda value: events.append(("progress", value)),
+            lambda success, message: events.append(("done", success)),
+            lambda message: events.append(("status", message)),
+        )
+        process = mock.Mock()
+        process.stdout = ["ST_PROGRESS:10%", "ST_PROGRESS:50%"]
+        process.wait.return_value = 0
+        with mock.patch.object(Path, "is_file", return_value=True), mock.patch.object(
+            downloader.subprocess, "Popen", return_value=process,
+        ):
+            worker._run()
+        self.assertEqual(events[0], ("status", "Iniciando download."))
+        self.assertEqual([event for event in events if event[0] == "status"],
+                         [("status", "Iniciando download.")])
+        self.assertEqual(events[-1], ("done", True))
+
+    def test_rejects_unsupported_quality(self):
+        with self.assertRaises(ValueError):
+            downloader.DownloadWorker(
+                ROOT, "https://example.com/video", "MP4", ROOT, False,
+                lambda value: None, lambda success, message: None, quality=2160,
+            )
+
+    def test_notification_sounds_are_valid_wave_files(self):
+        for name in ("jogada_certa.wav", "zona_cruzamento.wav"):
+            with wave.open(str(PACKAGE / "sounds" / name), "rb") as sound:
+                self.assertGreater(sound.getnframes(), 0)
+                self.assertEqual(sound.getsampwidth(), 2)
 
     def test_permanent_playlist_errors_do_not_need_authorization(self):
         self.assertTrue(utils.has_permanent_content_error("ERROR: Video unavailable"))

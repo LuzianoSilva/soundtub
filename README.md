@@ -2,6 +2,22 @@
 
 Add-on acessível para baixar áudio MP3 e vídeo MP4 pelo NVDA com `NVDA+Alt+Y`.
 
+Na janela, uma única lista reúne formato e qualidade: MP3 em 128, 192, 256
+ou 320 kbps, ou MP4 com resolução máxima de 360p, 480p, 720p ou 1080p.
+Use as setas para percorrer as opções. O MP3 é convertido para a taxa escolhida:
+uma taxa maior não melhora a qualidade da fonte. Para MP4, é usada a melhor
+resolução disponível até o limite escolhido; algumas fontes podem não oferecer
+uma resolução dentro desse limite.
+
+Ao chegar à lista com Tab, o primeiro item solicita que o usuário escolha o
+formato e a qualidade. Nenhuma qualidade vem pré-selecionada; é necessário
+usar as setas e escolher uma opção antes de iniciar o download.
+
+O NVDA anuncia “Iniciando download” assim que o processo começa, junto com o
+som `jogada_certa`, sem anunciar “Preparando download” nem “Analisando o
+endereço”. Ao concluir com sucesso, ele anuncia o resultado e toca
+`zona_cruzamento`.
+
 ## Diferencial
 
 O SoundTub foi projetado para uma experiência centrada no NVDA, sem depender da

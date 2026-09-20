@@ -1,5 +1,18 @@
 # Histórico de mudanças
 
+## 4.1.0
+
+- Reúne formato e qualidade em uma única lista acessível por setas: MP3 em
+  128, 192, 256 ou 320 kbps e MP4 com resolução máxima de 360p, 480p, 720p ou 1080p.
+- A lista começa com um convite para selecionar formato e qualidade, sem
+  pré-selecionar 192 kbps ou qualquer outra opção.
+- Mantém a qualidade escolhida para todos os itens de uma playlist e nas tentativas de recuperação.
+- Reproduz jogada_certa ao iniciar o processo e zona_cruzamento na
+  conclusão bem-sucedida, sem substituir as mensagens faladas do NVDA.
+- Remove o anúncio redundante “Preparando download”; o NVDA anuncia
+  “Iniciando download” imediatamente no começo, junto com o som, sem anunciar
+  “Analisando o endereço” nem repetir o aviso de início. Mantém fala e som na conclusão.
+
 ## 4.0.0
 
 - Adota numeração superior à versão 3.3.3 que chegou a ser publicada durante a

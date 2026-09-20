@@ -1,10 +1,13 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><title>SoundTub Help</title></head><body>
-<h1>SoundTub 4.0.0</h1><p>SoundTub provides an accessible NVDA interface for downloading MP3 audio and MP4 video.</p>
-<h2>Usage</h2><ol><li>Press <kbd>NVDA+Alt+Y</kbd>.</li><li>Paste the content URL.</li><li>Select MP3 or MP4 and a destination folder.</li><li>To download every item, check “Download complete playlist”. It is unchecked by default.</li><li>Activate Download.</li></ol>
-<h2>What makes SoundTub different</h2><p>SoundTub provides an NVDA-first workflow that is fully operable from the keyboard. The screen reader announces analysis, startup, progress, playlist position, partial results and errors. Completed items are preserved and only missing items are retried. The add-on does not read browser cookies or accounts.</p>
+<h1>SoundTub 4.1.0</h1><p>SoundTub provides an accessible NVDA interface for downloading MP3 audio and MP4 video.</p>
+<h2>Usage</h2><ol><li>Press <kbd>NVDA+Alt+Y</kbd>.</li><li>Paste the content URL.</li><li>Use the arrow keys in the “Format and quality” list to choose MP3 or MP4 with the desired quality.</li><li>Select a destination folder.</li><li>To download every item, check “Download complete playlist”. It is unchecked by default.</li><li>Activate Download.</li></ol>
+<p>MP3 offers 128, 192, 256, and 320 kbps output bitrates. A higher bitrate cannot improve the original audio quality. MP4 offers maximum resolutions of 360p, 480p, 720p, and 1080p. The best available resolution up to the selected limit is used; the download may fail if none is available.</p>
+<p>When you reach the list with Tab, its first item asks you to select the format and quality. Use the arrow keys to choose an option before activating Download. No quality is preselected.</p>
+<p>The jogada_certa sound plays when the download process starts; zona_cruzamento plays after successful completion. NVDA spoken announcements remain active.</p>
+<h2>What makes SoundTub different</h2><p>SoundTub provides an NVDA-first workflow that is fully operable from the keyboard. The screen reader announces startup, progress, playlist position, partial results and errors. Completed items are preserved and only missing items are retried. The add-on does not read browser cookies or accounts.</p>
 <p>Playlists are saved in their own folder, with files numbered in their original order. Check the item count and available disk space before starting a large playlist.</p>
 <p>If an item fails, SoundTub retries only the missing items. If a video is private, removed, or rejected by the service, completed files are preserved and the completed count is reported.</p>
-<p>NVDA announces URL analysis, anonymous authorization when needed, the start, and the progress of the download. The add-on does not read browser cookies and does not require an open browser.</p>
+<p>NVDA announces “Starting download” as the process begins, followed by anonymous authorization when needed and progress updates. The add-on does not read browser cookies and does not require an open browser.</p>
 <p>Only download content you are authorized to save. Private, restricted, or protected content may not work without authentication.</p>
 <h2>License</h2><p>SoundTub is GPL-3.0-or-later. Bundled components retain their respective licenses.</p>
 </body></html>

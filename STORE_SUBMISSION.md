@@ -2,9 +2,9 @@
 
 ## Estado atual
 
-O código e o pacote 4.0.0 estão preparados, mas a publicação só deve ocorrer depois
-de testar manualmente esta versão no NVDA estável mais recente. O manifesto declara
-apenas a versão do NVDA efetivamente usada nos testes locais.
+A versão 4.0.0 foi publicada na Loja de Complementos do NVDA. Para a atualização
+4.1.0, o manifesto mantém a última versão do NVDA declarada como testada; somente
+altere esse campo após um teste na versão correspondente.
 
 ## Dados para o cadastro
 
@@ -15,7 +15,7 @@ apenas a versão do NVDA efetivamente usada nos testes locais.
 - Licença: GNU GPL v3 ou posterior (`GPL-3.0-or-later`)
 - URL da licença: `https://www.gnu.org/licenses/gpl-3.0.html`
 - Repositório de código: `https://github.com/LuzianoSilva/soundtub`
-- Download imutável: `https://github.com/LuzianoSilva/soundtub/releases/download/v4.0.0/SoundTub-4.0.0.nvda-addon`
+- Download imutável da atualização: `https://github.com/LuzianoSilva/soundtub/releases/download/v4.1.0/SoundTub-4.1.0.nvda-addon`
 
 ## Checklist antes de publicar
 
@@ -24,7 +24,7 @@ apenas a versão do NVDA efetivamente usada nos testes locais.
 3. Executar `python -m unittest discover -s tests`.
 4. Executar `powershell -ExecutionPolicy Bypass -File tools/build_addon.ps1`.
 5. Confirmar o SHA-256 e instalar o arquivo produzido em `dist`.
-6. Criar um repositório público no GitHub e publicar o código com a tag `v4.0.0`.
+6. Publicar o código-fonte e criar a tag `v4.1.0` no GitHub.
 7. Anexar o `.nvda-addon` à release; a URL precisa ser HTTPS, direta, imutável e terminar em `.nvda-addon`.
 8. Enviar o formulário de registro: https://github.com/nvaccess/addon-datastore/issues/new?template=registerAddon.yml
 
