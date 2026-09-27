@@ -18,6 +18,14 @@ som `jogada_certa`, sem anunciar “Preparando download” nem “Analisando o
 endereço”. Ao concluir com sucesso, ele anuncia o resultado e toca
 `zona_cruzamento`.
 
+Para baixar uma playlist, marque a opção correspondente e cole um endereço do
+YouTube que contenha `list=`, como `youtube.com/playlist?list=...`. Endereços de
+canal, como `youtube.com/@nome`, não identificam uma playlist e são recusados.
+Se a playlist for interrompida, execute novamente o mesmo endereço, formato,
+qualidade e pasta de destino. O SoundTub continuará arquivos parciais e ignorará
+os itens já concluídos. O NVDA anuncia quando uma playlist está sendo retomada.
+Depois que ela termina com sucesso, esse registro temporário é removido.
+
 ## Diferencial
 
 O SoundTub foi projetado para uma experiência centrada no NVDA, sem depender da
@@ -25,7 +33,8 @@ acessibilidade de páginas ou aplicativos externos. A interface é totalmente op
 por teclado e o leitor de telas anuncia a análise do endereço, o início e o progresso
 do download, a posição na playlist, conclusões parciais e erros. Em playlists, os
 arquivos já concluídos são preservados e somente os itens ausentes são tentados
-novamente. O funcionamento é anônimo e não lê cookies nem contas do navegador.
+novamente, inclusive após fechar o NVDA ou reiniciar o computador. O funcionamento
+é anônimo e não lê cookies nem contas do navegador.
 
 ## Arquitetura
 

@@ -4,10 +4,11 @@ import logging
 import nvwave
 import ui
 import wx
+import globalVars
 
 from . import config as soundtub_config
 from .downloader import AUDIO_QUALITIES, VIDEO_QUALITIES, DownloadWorker
-from .utils import ensure_destination, validate_url
+from .utils import ensure_destination, is_youtube_playlist_url, validate_url
 
 log = logging.getLogger("nvda.soundtub")
 
@@ -99,6 +100,13 @@ class SoundTubDialog(wx.Dialog):
             self._showError(_("Digite um endereço HTTP ou HTTPS válido."))
             self.url.SetFocus()
             return
+        if self.playlist.Value and not is_youtube_playlist_url(url):
+            self._showError(_(
+                "Oops! a URL informada não é uma playlist. "
+                "cole o link correto e tente novamente"
+            ))
+            self.url.SetFocus()
+            return
         if self.format.Selection <= 0:
             self._showError(_("Selecione o formato e a qualidade que deseja baixar."))
             self.format.SetFocus()
@@ -110,6 +118,7 @@ class SoundTubDialog(wx.Dialog):
             return
         media_format, quality = self.format_options[self.format.Selection - 1]
         tools_dir = Path(__file__).resolve().parent / "dependencies" / "win64"
+        state_dir = Path(globalVars.appArgs.configPath) / "soundtub" / "playlistState"
         self._announced.clear()
         self._start_sound_played = False
         self.progress.Value = 0
@@ -121,13 +130,18 @@ class SoundTubDialog(wx.Dialog):
             lambda message: wx.CallAfter(self._onStatus, message),
             lambda index, total: wx.CallAfter(self._onPlaylistItem, index, total),
             quality=quality,
+            state_dir=state_dir,
         )
         self._worker.start()
 
     def _onStatus(self, message):
         self.status.Label = message
         ui.message(message)
-        if message == _("Iniciando download.") and not self._start_sound_played:
+        starts_download = message in (
+            _("Iniciando download."),
+            _("Retomando playlist. Os itens já concluídos serão ignorados."),
+        )
+        if starts_download and not self._start_sound_played:
             self._start_sound_played = True
             self._playSound("jogada_certa.wav")
 

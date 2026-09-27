@@ -2,6 +2,7 @@ import logging
 import os
 import subprocess
 import threading
+from hashlib import sha256
 from pathlib import Path
 
 from .utils import (
@@ -10,6 +11,7 @@ from .utils import (
     parse_playlist_done,
     parse_playlist_item,
     parse_progress,
+    youtube_playlist_id,
 )
 
 log = logging.getLogger("nvda.soundtub")
@@ -23,7 +25,7 @@ class DownloadCancelled(Exception):
 
 
 class DownloadWorker:
-    def __init__(self, tools_dir, url, media_format, destination, playlist, on_progress, on_done, on_status=None, on_item=None, quality=None):
+    def __init__(self, tools_dir, url, media_format, destination, playlist, on_progress, on_done, on_status=None, on_item=None, quality=None, state_dir=None):
         self.tools_dir = Path(tools_dir)
         self.url = url
         self.media_format = media_format
@@ -37,6 +39,9 @@ class DownloadWorker:
         self.on_done = on_done
         self.on_status = on_status or (lambda message: None)
         self.on_item = on_item or (lambda index, total: None)
+        self.state_dir = Path(state_dir) if state_dir else None
+        self._archive_path = self._playlist_state_path("archive")
+        self._active_path = self._playlist_state_path("active")
         self._process = None
         self._cancelled = threading.Event()
         self._thread = None
@@ -61,12 +66,50 @@ class DownloadWorker:
             except OSError:
                 log.exception("Falha ao encerrar o processo do SoundTub")
 
+    def _playlist_state_path(self, extension):
+        playlist_id = youtube_playlist_id(self.url)
+        if not self.playlist or not self.state_dir or not playlist_id:
+            return None
+        destination = str(Path(self.destination).resolve()).casefold()
+        identity = "%s\0%s\0%d\0%s" % (
+            playlist_id, self.media_format, self.quality, destination
+        )
+        name = sha256(identity.encode("utf-8")).hexdigest()
+        return self.state_dir / (name + "." + extension)
+
+    def _archive_count(self):
+        if not self._archive_path or not self._archive_path.is_file():
+            return 0
+        try:
+            entries = {
+                line.strip()
+                for line in self._archive_path.read_text(
+                    encoding="utf-8", errors="replace"
+                ).splitlines()
+                if line.strip()
+            }
+            return len(entries)
+        except FileNotFoundError:
+            return 0
+        except OSError:
+            log.exception("Não foi possível ler o histórico da playlist")
+            return 0
+
+    def _clear_playlist_state(self):
+        for path in (self._archive_path, self._active_path):
+            if not path:
+                continue
+            try:
+                path.unlink(missing_ok=True)
+            except OSError:
+                log.exception("Não foi possível limpar o histórico %s", path)
+
     def build_command(self, player_client="web_embedded", playlist_items=None):
         ytdlp = self.tools_dir / "yt-dlp.exe"
         ffmpeg = self.tools_dir
         command = [
             str(ytdlp), "--newline", "--no-warnings",
-            "--force-ipv4", "--no-continue", "--retries", "5", "--fragment-retries", "5",
+            "--force-ipv4", "--continue", "--retries", "5", "--fragment-retries", "5",
             "--progress-template", "download:ST_PROGRESS:%(progress._percent_str)s",
             "--ffmpeg-location", str(ffmpeg),
             "--windows-filenames", "--trim-filenames", "180",
@@ -78,6 +121,8 @@ class DownloadWorker:
                 "--print", "after_move:ST_DONE:%(playlist_index)s:%(playlist_count)s",
                 "-o", str(Path(self.destination) / "%(playlist_title).150B" / "%(playlist_index)03d - %(title).150B.%(ext)s"),
             ])
+            if self._archive_path:
+                command.extend(["--download-archive", str(self._archive_path)])
             if playlist_items:
                 command.extend(["--playlist-items", ",".join(str(item) for item in playlist_items)])
         else:
@@ -118,6 +163,7 @@ class DownloadWorker:
         completed_items = set()
         playlist_total = None
         partial_failure = False
+        resumed = False
         try:
             required = (
                 "yt-dlp.exe", "ffmpeg.exe", "ffprobe.exe", "qjs.exe",
@@ -129,7 +175,16 @@ class DownloadWorker:
             creationflags = 0
             if os.name == "nt":
                 creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
-            self.on_status(_("Iniciando download."))
+            if self._active_path:
+                self.state_dir.mkdir(parents=True, exist_ok=True)
+                resumed = self._active_path.is_file() or self._archive_count() > 0
+                self._active_path.touch(exist_ok=True)
+            if resumed:
+                self.on_status(_(
+                    "Retomando playlist. Os itens já concluídos serão ignorados."
+                ))
+            else:
+                self.on_status(_("Iniciando download."))
             retry_items = None
             for player_client in ("web_embedded", "mweb"):
                 attempt_output = []
@@ -203,14 +258,15 @@ class DownloadWorker:
             log.exception("Erro no download do SoundTub")
             self.on_done(False, friendly_error(str(error)))
         else:
-            if self.playlist and playlist_total and len(completed_items) < playlist_total:
-                missing = playlist_total - len(completed_items)
+            completed_total = max(len(completed_items), self._archive_count())
+            if self.playlist and playlist_total and completed_total < playlist_total:
+                missing = playlist_total - completed_total
                 message = _(
                     "Playlist concluída parcialmente: %(completed)d de %(total)d itens baixados. "
                     "%(missing)d item ou itens estavam indisponíveis ou foram recusados. "
                     "Os arquivos concluídos não foram repetidos."
                 ) % {
-                    "completed": len(completed_items),
+                    "completed": completed_total,
                     "total": playlist_total,
                     "missing": missing,
                 }
@@ -220,6 +276,7 @@ class DownloadWorker:
                     "A playlist foi concluída parcialmente. Os arquivos concluídos não foram repetidos."
                 ))
             else:
+                self._clear_playlist_state()
                 self.on_done(True, _("Download concluído com sucesso."))
         finally:
             self._process = None

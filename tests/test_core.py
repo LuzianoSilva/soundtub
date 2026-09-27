@@ -35,6 +35,29 @@ class CoreTests(unittest.TestCase):
         self.assertIsNone(utils.validate_url("javascript:alert(1)"))
         self.assertIsNone(utils.validate_url("https://user:secret@example.com"))
 
+    def test_youtube_playlist_url_validation(self):
+        self.assertTrue(utils.is_youtube_playlist_url(
+            "https://www.youtube.com/playlist?list=PL123"
+        ))
+        self.assertTrue(utils.is_youtube_playlist_url(
+            "https://www.youtube.com/watch?v=abc&list=PL123"
+        ))
+        self.assertTrue(utils.is_youtube_playlist_url(
+            "https://youtu.be/abc?list=PL123"
+        ))
+        self.assertFalse(utils.is_youtube_playlist_url(
+            "https://www.youtube.com/@PlaylistMakr"
+        ))
+        self.assertFalse(utils.is_youtube_playlist_url(
+            "https://youtube.com.evil.example/playlist?list=PL123"
+        ))
+        self.assertEqual(
+            utils.youtube_playlist_id(
+                "https://www.youtube.com/watch?v=abc&list=PL123"
+            ),
+            "PL123",
+        )
+
     def test_progress(self):
         self.assertEqual(utils.parse_progress("ST_PROGRESS: 25.7%"), 25)
         self.assertEqual(utils.parse_progress("x ST_PROGRESS:100%"), 100)
@@ -67,6 +90,84 @@ class CoreTests(unittest.TestCase):
         command = worker.build_command("mweb", [4, 9])
         position = command.index("--playlist-items")
         self.assertEqual(command[position + 1], "4,9")
+
+    def test_playlist_command_enables_resume_and_archive(self):
+        with tempfile.TemporaryDirectory() as folder:
+            worker = downloader.DownloadWorker(
+                ROOT,
+                "https://www.youtube.com/playlist?list=PL123",
+                "MP3",
+                ROOT,
+                True,
+                lambda value: None,
+                lambda success, message: None,
+                quality=192,
+                state_dir=folder,
+            )
+            command = worker.build_command()
+            self.assertIn("--continue", command)
+            self.assertNotIn("--no-continue", command)
+            archive_position = command.index("--download-archive")
+            self.assertEqual(
+                Path(command[archive_position + 1]), worker._archive_path
+            )
+
+            other_quality = downloader.DownloadWorker(
+                ROOT,
+                "https://www.youtube.com/playlist?list=PL123",
+                "MP3",
+                ROOT,
+                True,
+                lambda value: None,
+                lambda success, message: None,
+                quality=320,
+                state_dir=folder,
+            )
+            self.assertNotEqual(worker._archive_path, other_quality._archive_path)
+
+            other_destination = downloader.DownloadWorker(
+                ROOT,
+                "https://www.youtube.com/playlist?list=PL123",
+                "MP3",
+                Path(folder) / "other",
+                True,
+                lambda value: None,
+                lambda success, message: None,
+                quality=192,
+                state_dir=folder,
+            )
+            self.assertNotEqual(worker._archive_path, other_destination._archive_path)
+
+    def test_interrupted_playlist_is_announced_as_resume(self):
+        events = []
+        with tempfile.TemporaryDirectory() as folder:
+            worker = downloader.DownloadWorker(
+                ROOT,
+                "https://www.youtube.com/playlist?list=PL123",
+                "MP3",
+                ROOT,
+                True,
+                lambda value: None,
+                lambda success, message: events.append(("done", success)),
+                lambda message: events.append(("status", message)),
+                quality=192,
+                state_dir=folder,
+            )
+            worker.state_dir.mkdir(parents=True, exist_ok=True)
+            worker._active_path.touch()
+            process = mock.Mock()
+            process.stdout = ["ST_ITEM:1:1", "ST_DONE:1:1"]
+            process.wait.return_value = 0
+            with mock.patch.object(Path, "is_file", return_value=True), mock.patch.object(
+                downloader.subprocess, "Popen", return_value=process,
+            ):
+                worker._run()
+            self.assertFalse(worker._active_path.exists())
+        self.assertEqual(
+            events[0],
+            ("status", "Retomando playlist. Os itens já concluídos serão ignorados."),
+        )
+        self.assertEqual(events[-1], ("done", True))
 
     def test_audio_quality_presets(self):
         for quality in downloader.AUDIO_QUALITIES:

@@ -1,5 +1,13 @@
 # Histórico de mudanças
 
+## 4.1.1
+
+- Ao marcar o download de playlist, aceita somente um endereço do YouTube com
+  identificador `list=` e informa claramente quando foi colado um link de canal.
+- Retoma automaticamente playlists interrompidas usando o mesmo formato e a
+  mesma qualidade, preserva arquivos parciais e ignora os itens já concluídos.
+- O NVDA anuncia quando uma playlist está sendo retomada.
+
 ## 4.1.0
 
 - Reúne formato e qualidade em uma única lista acessível por setas: MP3 em

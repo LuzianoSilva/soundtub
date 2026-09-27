@@ -1,6 +1,6 @@
 import re
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 _PROGRESS_RE = re.compile(r"ST_PROGRESS:\s*([0-9]+(?:[.,][0-9]+)?)%")
 _PLAYLIST_ITEM_RE = re.compile(r"ST_ITEM:\s*(\d+):(?:(\d+)|NA)")
@@ -18,6 +18,29 @@ def validate_url(value):
     if parsed.username or parsed.password:
         return None
     return value
+
+
+def youtube_playlist_id(value):
+    """Return the YouTube playlist identifier present in a URL."""
+    try:
+        parsed = urlsplit(value.strip())
+    except ValueError:
+        return None
+    host = (parsed.hostname or "").lower().rstrip(".")
+    is_youtube = (
+        host == "youtube.com"
+        or host.endswith(".youtube.com")
+        or host == "youtu.be"
+    )
+    if not is_youtube:
+        return None
+    playlist_id = parse_qs(parsed.query).get("list", [""])[0].strip()
+    return playlist_id or None
+
+
+def is_youtube_playlist_url(value):
+    """Return True for YouTube URLs that identify a playlist with list=."""
+    return youtube_playlist_id(value) is not None
 
 
 def parse_progress(line):
